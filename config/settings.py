@@ -84,3 +84,7 @@ STRIPE_KEYS_BY_CURRENCY = {
         "secret": STRIPE_SECRET_KEY_EUR,
     },
 }
+
+
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
