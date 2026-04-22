@@ -58,10 +58,3 @@ docker compose up --build
 5. Проверка PaymentIntent:
    - `http://127.0.0.1:8000/intent/<id>/`
 
-## Перед деплоем
-
-- Установите `DJANGO_DEBUG=False`.
-- Пропишите домен в `DJANGO_ALLOWED_HOSTS`.
-- Пропишите HTTPS домен в `DJANGO_CSRF_TRUSTED_ORIGINS`.
-- Установите `APP_BASE_URL=https://your-domain`.
-- Используйте production БД (PostgreSQL) и секреты из менеджера секретов.
