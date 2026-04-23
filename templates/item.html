@@ -10,11 +10,20 @@
 
 <button id="checkout-button">Pay with Checkout</button>
 <button id="intent-button">Pay with PaymentIntent</button>
+<div id="card-section" style="display:none; margin-top: 16px;">
+    <div id="card-element" style="padding: 12px; border: 1px solid #ccc; border-radius: 6px;"></div>
+    <button id="confirm-intent-button" style="margin-top: 10px;">Confirm PaymentIntent</button>
+</div>
+<p id="payment-status" style="margin-top: 12px;"></p>
 
 <script src="https://js.stripe.com/v3/"></script>
 
 <script>
     const stripe = Stripe("{{ stripe_public_key }}");
+    const elements = stripe.elements();
+    const cardElement = elements.create("card");
+    cardElement.mount("#card-element");
+    let paymentIntentClientSecret = null;
 
     document.getElementById("checkout-button").onclick = async function () {
         try {
@@ -33,16 +42,46 @@
     };
 
     document.getElementById("intent-button").onclick = async function () {
+        const statusNode = document.getElementById("payment-status");
         try {
             const response = await fetch("/intent/{{ item.id }}/");
             const data = await response.json();
             if (!response.ok) {
                 throw new Error(data.error || "Failed to create payment intent");
             }
-            alert("Client secret: " + data.client_secret);
+            paymentIntentClientSecret = data.client_secret;
+            document.getElementById("card-section").style.display = "block";
+            statusNode.textContent = "PaymentIntent created. Enter card details and confirm payment.";
         } catch (error) {
-            alert(error.message);
+            statusNode.textContent = error.message;
         }
+    };
+
+    document.getElementById("confirm-intent-button").onclick = async function () {
+        const statusNode = document.getElementById("payment-status");
+        if (!paymentIntentClientSecret) {
+            statusNode.textContent = "Create PaymentIntent first.";
+            return;
+        }
+
+        statusNode.textContent = "Processing payment...";
+        const result = await stripe.confirmCardPayment(paymentIntentClientSecret, {
+            payment_method: {
+                card: cardElement,
+            }
+        });
+
+        if (result.error) {
+            statusNode.textContent = result.error.message;
+            return;
+        }
+
+        if (result.paymentIntent && result.paymentIntent.status === "succeeded") {
+            statusNode.textContent = "Payment succeeded.";
+            return;
+        }
+
+        statusNode.textContent = "Payment status: " + (result.paymentIntent ? result.paymentIntent.status : "unknown");
     };
 </script>
 
