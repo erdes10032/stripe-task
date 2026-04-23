@@ -8,6 +8,9 @@
 - `GET /buy/{id}/` — создание Checkout Session для одного `Item`.
 - `GET /order/{id}/buy/` — создание Checkout Session для `Order` (несколько `Item`, поддержка скидки и налога).
 - `GET /intent/{id}/` — создание Stripe PaymentIntent для `Item`.
+- На странице `GET /item/{id}/` есть два рабочих сценария оплаты:
+  - `Pay with Checkout` (редирект в Stripe Checkout),
+  - `Pay with PaymentIntent` (создание intent + подтверждение картой через Stripe.js `confirmCardPayment`).
 - `GET /success/`, `GET /cancel/` — служебные URL после оплаты.
 
 ## Модели
@@ -25,8 +28,6 @@
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
-python manage.py migrate
-python manage.py createsuperuser
 python manage.py runserver
 ```
 
@@ -40,21 +41,20 @@ python manage.py runserver
 docker compose up --build
 ```
 
-`docker-compose` автоматически применяет миграции перед запуском `gunicorn`.
 
 ## Как проверить функционал
 
-1. В админке создайте `Item` (например `12.50`, `usd`).
-2. Для проверки скидок/налогов создайте:
-   - `Discount` (например `10%`);
-   - `Tax` (например `20%`);
-   - `Order` с несколькими `Item` одной валюты и привяжите `Discount`/`Tax`.
-3. Проверка Checkout:
-   - для item: `http://127.0.0.1:8000/item/<id>/`
-   - для order: `http://127.0.0.1:8000/order/<id>/buy/`
-4. Проверка JSON-режима:
-   - `http://127.0.0.1:8000/buy/<id>/?format=json`
-   - `http://127.0.0.1:8000/order/<id>/buy/?format=json`
-5. Проверка PaymentIntent:
-   - `http://127.0.0.1:8000/intent/<id>/`
+1. Проверка Checkout:
+   - для item: `https://stripe-task-2.onrender.com/item/1/` и нажмите на кнопку `Pay with Checkout`
+   - для order: `https://stripe-task-2.onrender.com/order/1/buy/`
+   В открывшемся окне введите тестовую карту Stripe (например `4242 4242 4242 4242`, любая будущая дата, любой CVC, любая почта, любое имя пользователя и страна). Нажмите `Оплатить` и откроется страница со статусом платежа
+2. Проверка JSON-режима:
+   - `https://stripe-task-2.onrender.com/buy/1/?format=json`
+   - `https://stripe-task-2.onrender.com/order/1/buy/?format=json`
+3. Проверка PaymentIntent:
+   - откройте `https://stripe-task-2.onrender.com/item/1/`
+   - нажмите `Pay with PaymentIntent`
+   - введите тестовую карту Stripe (например `4242 4242 4242 4242`, любая будущая дата, любой CVC, любой индекс)
+   - нажмите `Confirm PaymentIntent` и проверьте статус `Payment succeeded.`
+4. При желании также можно самостоятельно создать товары по адресу `https://stripe-task-2.onrender.com/admin/` (логин и пароль `admin`)
 
