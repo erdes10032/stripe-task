@@ -1,0 +1,28 @@
+databases:
+  - name: stripe-task-db
+    databaseName: stripe_task
+    user: stripe_task_user
+    plan: free
+
+services:
+  - type: web
+    name: stripe-task
+    env: docker
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /success/
+    envVars:
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: stripe-task-db
+          property: connectionString
+      - key: DJANGO_ADMIN_USERNAME
+        value: "admin"
+      - key: DJANGO_ADMIN_PASSWORD
+        value: "admin"
+      - key: DJANGO_ADMIN_EMAIL
+        value: "admin@example.com"
